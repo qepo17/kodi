@@ -62,7 +62,13 @@ pub struct ToolFunction {
 
 #[derive(Deserialize)]
 pub struct Response {
-    pub choices: Vec<Choice>,
+    pub choices: Option<Vec<Choice>>,
+    pub error: Option<ApiError>,
+}
+
+#[derive(Deserialize)]
+pub struct ApiError {
+    pub message: String,
 }
 
 #[derive(Deserialize)]

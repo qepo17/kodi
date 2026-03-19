@@ -11,7 +11,7 @@ pub async fn agent_loop(client: &reqwest::Client, api_key: &str, query: &str) ->
     ];
 
     loop {
-        let resp: Response = client
+        let body = client
             .post(API_URL)
             .bearer_auth(api_key)
             .json(&Request {
@@ -22,10 +22,20 @@ pub async fn agent_loop(client: &reqwest::Client, api_key: &str, query: &str) ->
             })
             .send()
             .await?
-            .json()
+            .text()
             .await?;
 
-        let choice = &resp.choices[0];
+        let resp: Response = serde_json::from_str(&body)?;
+
+        if let Some(err) = &resp.error {
+            return Err(anyhow::anyhow!("API error: {}", err.message));
+        }
+
+        let choice = &resp
+            .choices
+            .as_ref()
+            .and_then(|c| c.first())
+            .ok_or_else(|| anyhow::anyhow!("No choices in response"))?;
 
         // Add assistant message to history
         messages.push(Message::Assistant {
@@ -46,7 +56,7 @@ pub async fn agent_loop(client: &reqwest::Client, api_key: &str, query: &str) ->
                 let output = execute_tool(&tc.function.name, &tc.function.arguments);
                 messages.push(Message::Tool {
                     tool_call_id: tc.id.clone(),
-                    content: output,
+                    content: output.unwrap_or_else(|e| format!("Error: {e}")),
                 });
             }
         }
@@ -54,21 +64,45 @@ pub async fn agent_loop(client: &reqwest::Client, api_key: &str, query: &str) ->
 }
 
 fn get_tools() -> Vec<Tool> {
-    vec![Tool {
-        r#type: "function".to_string(),
-        function: ToolFunction {
-            name: "bash".to_string(),
-            description: "Run a bash command".to_string(),
-            parameters: serde_json::json!({
-                "type": "object",
-                "properties": {
-                    "command": {
-                        "type": "string",
-                        "description": "The bash command to run"
-                    }
-                },
-                "required": ["command"]
-            }),
+    vec![
+        Tool {
+            r#type: "function".to_string(),
+            function: ToolFunction {
+                name: "bash".to_string(),
+                description: "Run a bash command".to_string(),
+                parameters: serde_json::json!({
+                    "type": "object",
+                    "properties": {
+                        "command": {
+                            "type": "string",
+                            "description": "The bash command to run"
+                        }
+                    },
+                    "required": ["command"]
+                }),
+            },
         },
-    }]
+        Tool {
+            r#type: "function".to_string(),
+            function: ToolFunction {
+                name: "read_file".to_string(),
+                description: "Run a read file command".to_string(),
+                parameters: serde_json::json!({
+                   "type": "object",
+                    "properties": {
+                        "path": {
+                            "type": "string",
+                            "description": "Path of the file"
+                        },
+                        "limit": {
+                            "type":
+                            "string",
+                            "description": "Limit chars to see the file"
+                        }
+                    },
+                    "required": ["path"]
+                }),
+            },
+        },
+    ]
 }
