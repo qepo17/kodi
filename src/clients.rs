@@ -96,7 +96,7 @@ fn get_tools() -> Vec<Tool> {
                         },
                         "limit": {
                             "type":
-                            "string",
+                            "integer",
                             "description": "Limit chars to see the file"
                         }
                     },
