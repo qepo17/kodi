@@ -39,7 +39,7 @@ fn safe_path(workdir: &Path, p: &str) -> Result<PathBuf, Error> {
 fn run_read(workdir: &Path, path: &str, limit: Option<usize>) -> Result<String, Error> {
     let path = safe_path(workdir, path)?;
     let text =
-        fs::read_to_string(&path).with_context(|| format!("Failed to read {}:", path.display()))?;
+        fs::read_to_string(&path).with_context(|| format!("Failed to read: {}", path.display()))?;
 
     let result: String = match limit {
         Some(n) => text.lines().take(n).collect::<Vec<_>>().join("\n"),
