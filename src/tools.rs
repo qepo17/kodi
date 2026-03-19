@@ -48,7 +48,10 @@ fn run_read(workdir: &Path, path: &str, limit: Option<usize>) -> Result<String, 
 
     // Truncate to 50000 chars
     if result.len() > 50_000 {
-        Ok(result.chars().take(50_000).collect())
+        Ok(format!(
+            "{}... [truncated]",
+            result.chars().take(50_000).collect::<String>()
+        ))
     } else {
         Ok(result)
     }
