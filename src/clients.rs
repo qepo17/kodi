@@ -86,7 +86,7 @@ fn get_tools() -> Vec<Tool> {
             r#type: "function".to_string(),
             function: ToolFunction {
                 name: "read_file".to_string(),
-                description: "Run a read file command".to_string(),
+                description: "Read the contents of a file at the given path".to_string(),
                 parameters: serde_json::json!({
                    "type": "object",
                     "properties": {
@@ -97,7 +97,7 @@ fn get_tools() -> Vec<Tool> {
                         "limit": {
                             "type":
                             "integer",
-                            "description": "Limit chars to see the file"
+                            "description": "Limit lines to see the file"
                         }
                     },
                     "required": ["path"]
